@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARC — Le son, sans le bruit.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #condition-unused; /* placeholder removed below */
+  }
+  :root{
+    --black: #050506;
+    --black-soft: #0c0c0f;
+    --panel: #111114;
+    --white: #f5f5f7;
+    --silver: #a8adb4;
+    --line: rgba(245,245,247,0.10);
+    --glow: #6e7cff;
+    --glow-soft: rgba(110,124,255,0.35);
+    --product-color-1: #e8e9ec;
+    --product-color-2: #c7cad0;
+    --radius: 22px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--black);
+    color:var(--white);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--glow); color:#fff; }
+
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--silver);
+    margin-bottom:16px;
+    display:inline-block;
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:200;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px;
+    background:rgba(5,5,6,0);
+    border-bottom:1px solid transparent;
+    transition:background .4s ease, border-color .4s ease, padding .4s ease;
+  }
+  nav.scrolled{
+    background:rgba(5,5,6,0.72);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border-bottom:1px solid var(--line);
+    padding:14px 40px;
+  }
+  .logo{
+    font-weight:800; font-size:18px; letter-spacing:0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .logo-mark{
+    width:16px; height:16px; border-radius:50%;
+    background:conic-gradient(from 180deg, var(--glow), #fff, var(--glow));
+  }
+  .nav-links{ display:flex; gap:32px; list-style:none; }
+  .nav-links a{
+    color:var(--silver); text-decoration:none; font-size:13px; font-weight:500;
+    transition:color .25s;
+  }
+  .nav-links a:hover{ color:var(--white); }
+  .nav-right{ display:flex; align-items:center; gap:22px; }
+  .cart-btn{
+    position:relative; background:none; border:none; color:var(--white);
+    cursor:pointer; padding:6px;
+  }
+  .cart-count{
+    position:absolute; top:-4px; right:-6px;
+    background:var(--glow); color:#fff;
+    font-size:10px; font-weight:700;
+    width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    position:relative;
+    height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    overflow:hidden;
+    text-align:center;
+  }
+  .hero-bg-gradient{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(110,124,255,0.16), transparent 55%),
+      radial-gradient(circle at 20% 80%, rgba(168,173,180,0.08), transparent 50%),
+      var(--black);
+    z-index:0;
+  }
+  .scene{
+    position:relative; z-index:2;
+    perspective:1400px;
+    width:100%; height:340px;
+    display:flex; align-items:center; justify-content:center;
+    margin-top:10px;
+  }
+  .earbud-case{
+    position:relative;
+    width:150px; height:190px;
+    transform-style:preserve-3d;
+    transform:rotateX(8deg) rotateY(-18deg);
+    will-change:transform;
+  }
+  .case-body{
+    position:absolute; inset:0;
+    border-radius:50% 50% 46% 46% / 42% 42% 58% 58%;
+    background:linear-gradient(155deg,#f2f2f4 0%,#c9cbcf 55%,#a9acb1 100%);
+    box-shadow:
+      inset -14px -18px 30px rgba(0,0,0,0.18),
+      inset 10px 14px 22px rgba(255,255,255,0.6),
+      0 40px 70px rgba(0,0,0,0.55);
+  }
+  .case-lid{
+    position:absolute; top:-2px; left:6px; right:6px; height:96px;
+    border-radius:50% 50% 40% 40% / 60% 60% 30% 30%;
+    background:linear-gradient(155deg,#fbfbfc 0%,#d6d8db 100%);
+    box-shadow:inset 0 -6px 14px rgba(0,0,0,0.12);
+    transform-origin:top center;
+    transform:rotateX(0deg);
+    transition:transform .2s linear;
+  }
+  .bud{
+    position:absolute; top:34px;
+    transform-style:preserve-3d;
+    transition:transform .25s ease-out, opacity .25s ease-out;
+    opacity:0;
+  }
+  .bud-left{ left:22px; }
+  .bud-right{ right:22px; }
+  .bud-head{
+    width:34px; height:34px; border-radius:50%;
+    background:linear-gradient(145deg, var(--product-color-1), var(--product-color-2));
+    box-shadow:inset -4px -4px 8px rgba(0,0,0,0.2), inset 3px 3px 6px rgba(255,255,255,0.7);
+  }
+  .bud-stem{
+    width:9px; height:34px; margin:2px auto 0;
+    border-radius:0 0 6px 6px;
+    background:linear-gradient(180deg, var(--product-color-1), var(--product-color-2));
+  }
+
+  .hero-copy{ position:relative; z-index:2; max-width:640px; padding:0 24px; }
+  .hero-copy h1{
+    font-size:clamp(40px,7vw,76px);
+    font-weight:800; line-height:1.02; letter-spacing:-0.02em;
+    margin-bottom:18px;
+  }
+  .hero-copy .sub{
+    color:var(--silver); font-size:17px; line-height:1.6;
+    max-width:480px; margin:0 auto 34px;
+  }
+  .hero-cta{ display:flex; gap:14px; justify-content:center; }
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
+    padding:13px 26px; border-radius:100px; border:none; cursor:pointer;
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn-primary{ background:var(--white); color:var(--black); }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(245,245,247,0.25); }
+  .btn-ghost{ background:transparent; color:var(--white); border:1px solid var(--line); }
+  .btn-ghost:hover{ border-color:var(--white); }
+
+  .scroll-hint{
+    position:absolute; bottom:34px; left:50%; transform:translateX(-50%);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em;
+    color:var(--silver); text-transform:uppercase;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    opacity:0.7; animation:hint-bob 2.4s ease-in-out infinite;
+  }
+  .scroll-hint::after{
+    content:''; width:1px; height:28px; background:linear-gradient(var(--silver),transparent);
+  }
+  @keyframes hint-bob{ 0%,100%{transform:translate(-50%,0);} 50%{transform:translate(-50%,8px);} }
+
+  /* ---------- SECTION GENERIC ---------- */
+  .section{
+    position:relative;
+    padding:180px 8vw;
+  }
+  .reveal{ opacity:0; transform:translateY(36px); transition:opacity .9s ease, transform .9s ease; }
+  .reveal.in-view{ opacity:1; transform:translateY(0); }
+
+  /* ---------- EXPLODED VIEW ---------- */
+  .exploded-wrap{
+    display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;
+  }
+  .exploded-scene{
+    position:relative; height:520px;
+    perspective:1200px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .layer{
+    position:absolute; border-radius:50%;
+    transform-style:preserve-3d;
+    left:50%; top:50%;
+    transition:transform .05s linear;
+  }
+  .layer-shell-top{
+    width:190px; height:190px; margin:-95px 0 0 -95px;
+    background:radial-gradient(circle at 35% 30%, #f4f4f6, #b9bcc1 75%);
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);
+  }
+  .layer-driver{
+    width:120px; height:120px; margin:-60px 0 0 -60px;
+    background:radial-gradient(circle at 40% 35%, var(--glow-soft), #2a2a33 70%);
+    box-shadow:0 20px 40px rgba(0,0,0,0.45);
+  }
+  .layer-battery{
+    width:150px; height:70px; margin:-35px 0 0 -75px;
+    border-radius:20px;
+    background:linear-gradient(120deg,#3e3f46,#1c1c21);
+    box-shadow:0 20px 40px rgba(0,0,0,0.45);
+  }
+  .layer-mesh{
+    width:210px; height:210px; margin:-105px 0 0 -105px;
+    background:
+      repeating-radial-gradient(circle, rgba(245,245,247,0.15) 0 1px, transparent 1px 6px);
+    border:1px solid var(--line); border-radius:50%;
+  }
+  .exploded-copy h2, .section h2{
+    font-size:clamp(30px,4vw,48px); font-weight:800; letter-spacing:-0.02em;
+    line-height:1.1; margin-bottom:20px;
+  }
+  .exploded-copy p, .section p{ color:var(--silver); font-size:16px; line-height:1.7; max-width:420px; }
+
+  /* ---------- STATS ---------- */
+  .stats{ padding-top:60px; padding-bottom:60px; }
+  .stats-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+  }
+  .stat{ background:var(--black-soft); padding:44px 28px; text-align:center; }
+  .stat .num{
+    font-size:44px; font-weight:800; letter-spacing:-0.02em;
+    background:linear-gradient(180deg,#fff,#9a9ea5);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .stat .label{ margin-top:10px; font-size:13px; color:var(--silver); }
+
+  /* ---------- COLORS ---------- */
+  .colors-wrap{ display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .color-preview{ perspective:1200px; height:220px; display:flex; align-items:center; justify-content:center; margin:40px 0; }
+  .color-preview .bud-head{ width:70px; height:70px; }
+  .color-preview .bud-stem{ width:16px; height:60px; }
+  .swatches{ display:flex; gap:16px; }
+  .swatch{
+    width:38px; height:38px; border-radius:50%; cursor:pointer; border:2px solid transparent;
+    box-shadow:inset -3px -3px 6px rgba(0,0,0,0.25), inset 3px 3px 5px rgba(255,255,255,0.4);
+    transition:transform .2s, border-color .2s;
+  }
+  .swatch:hover{ transform:scale(1.1); }
+  .swatch.active{ border-color:var(--white); }
+
+  /* ---------- SHOP ---------- */
+  .shop{ padding:140px 8vw 180px; }
+  .shop-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:56px; flex-wrap:wrap; gap:16px; }
+  .shop-head h2{ font-size:clamp(30px,4vw,44px); font-weight:800; letter-spacing:-0.02em; }
+  .shop-head p{ color:var(--silver); font-size:15px; max-width:340px; }
+
+  .product-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px;
+  }
+  .product-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:30px 26px 26px; display:flex; flex-direction:column; gap:14px;
+    transition:transform .3s ease, border-color .3s ease;
+  }
+  .product-card:hover{ transform:translateY(-6px); border-color:rgba(245,245,247,0.22); }
+  .product-visual{
+    height:150px; display:flex; align-items:center; justify-content:center;
+    border-radius:14px; background:radial-gradient(circle at 50% 30%, #1a1a1f, #0a0a0c);
+  }
+  .mini-earbud{ width:34px; height:34px; border-radius:50%; background:linear-gradient(145deg,#eee,#aaa); box-shadow:inset -3px -3px 6px rgba(0,0,0,.25); }
+  .mini-case{ width:70px; height:50px; border-radius:22px 22px 30px 30px; background:linear-gradient(150deg,#f2f2f4,#a9acb1); }
+  .mini-stand{ width:14px; height:70px; background:linear-gradient(180deg,#eee,#888); border-radius:6px; position:relative; }
+  .mini-stand::after{ content:''; position:absolute; bottom:-6px; left:-16px; width:46px; height:8px; border-radius:4px; background:#888; }
+  .mini-case-leather{ width:64px; height:44px; border-radius:14px; background:linear-gradient(150deg,#8a5a3c,#4a2e1c); }
+
+  .product-name{ font-weight:600; font-size:15px; }
+  .product-desc{ font-size:13px; color:var(--silver); line-height:1.5; flex-grow:1; }
+  .product-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+  .price{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
+  .add-btn{
+    font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
+    background:var(--white); color:var(--black); border:none; border-radius:100px;
+    padding:9px 18px; cursor:pointer; transition:background .2s, transform .2s;
+  }
+  .add-btn:hover{ transform:translateY(-2px); }
+  .add-btn.added{ background:var(--glow); color:#fff; }
+
+  /* ---------- CART ---------- */
+  .cart-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
+    z-index:300; opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .cart-overlay.open{ opacity:1; pointer-events:auto; }
+  .cart-drawer{
+    position:fixed; top:0; right:0; bottom:0; width:min(400px,92vw);
+    background:var(--black-soft); border-left:1px solid var(--line);
+    z-index:301; transform:translateX(100%); transition:transform .35s cubic-bezier(.19,1,.22,1);
+    display:flex; flex-direction:column; padding:28px;
+  }
+  .cart-drawer.open{ transform:translateX(0); }
+  .cart-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; }
+  .cart-header h3{ font-size:18px; font-weight:700; }
+  .cart-close{ background:none; border:none; color:var(--silver); font-size:20px; cursor:pointer; }
+  .cart-items{ flex-grow:1; overflow-y:auto; display:flex; flex-direction:column; gap:18px; }
+  .cart-empty{ color:var(--silver); font-size:14px; margin-top:40px; text-align:center; }
+  .cart-item{ display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:1px solid var(--line); padding-bottom:16px; }
+  .cart-item-name{ font-size:14px; font-weight:500; }
+  .cart-item-price{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--silver); }
+  .qty-ctrl{ display:flex; align-items:center; gap:10px; }
+  .qty-ctrl button{ width:22px; height:22px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--white); cursor:pointer; }
+  .cart-footer{ border-top:1px solid var(--line); padding-top:20px; margin-top:16px; }
+  .cart-total{ display:flex; justify-content:space-between; font-size:15px; font-weight:600; margin-bottom:16px; }
+  .checkout-btn{ width:100%; padding:14px; border-radius:100px; border:none; background:var(--white); color:var(--black); font-weight:700; font-size:14px; cursor:pointer; }
+  .checkout-btn:hover{ background:var(--glow); color:#fff; }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding:60px 8vw 40px; border-top:1px solid var(--line); }
+  .footer-top{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:30px; margin-bottom:40px; }
+  .footer-cols{ display:flex; gap:70px; flex-wrap:wrap; }
+  .footer-col h4{ font-size:12px; color:var(--silver); margin-bottom:14px; letter-spacing:0.06em; }
+  .footer-col a{ display:block; color:var(--white); text-decoration:none; font-size:13px; margin-bottom:9px; opacity:0.85; }
+  .footer-col a:hover{ opacity:1; }
+  .footer-bottom{ font-size:12px; color:var(--silver); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+  @media (max-width:860px){
+    .nav-links{ display:none; }
+    .exploded-wrap{ grid-template-columns:1fr; }
+    .stats-grid{ grid-template-columns:repeat(2,1fr); }
+    .section{ padding:120px 6vw; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+  }
+
+  :focus-visible{ outline:2px solid var(--glow); outline-offset:3px; }
+
+  /* toast */
+  .toast{
+    position:fixed; bottom:28px; left:50%; transform:translate(-50%,20px);
+    background:var(--white); color:var(--black); padding:14px 22px; border-radius:100px;
+    font-size:13px; font-weight:600; z-index:400; opacity:0; pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="logo"><span class="logo-mark"></span>ARC</div>
+  <ul class="nav-links">
+    <li><a href="#exploded">Design</a></li>
+    <li><a href="#colors">Coloris</a></li>
+    <li><a href="#shop">Boutique</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="cart-btn" id="cartBtn" aria-label="Ouvrir le panier">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6L4 3H2"/></svg>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-bg-gradient"></div>
+  <div class="scene">
+    <div class="earbud-case" id="heroCase">
+      <div class="case-lid" id="caseLid"></div>
+      <div class="case-body"></div>
+      <div class="bud bud-left" id="budLeft"><div class="bud-head"></div><div class="bud-stem"></div></div>
+      <div class="bud bud-right" id="budRight"><div class="bud-head"></div><div class="bud-stem"></div></div>
+    </div>
+  </div>
+  <div class="hero-copy">
+    <span class="eyebrow">ARC Buds — Nouveauté</span>
+    <h1>Le son, sans le bruit.</h1>
+    <p class="sub">Réduction de bruit active, 30 heures d'autonomie, et un boîtier qui tient dans une main. À partir de CHF 199.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Acheter ARC Buds</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('exploded').scrollIntoView({behavior:'smooth'})">Découvrir</button>
+    </div>
+  </div>
+  <div class="scroll-hint">Faites défiler</div>
+</header>
+
+<section class="section" id="exploded">
+  <div class="exploded-wrap">
+    <div class="exploded-scene">
+      <div class="layer layer-mesh" data-depth="1.6"></div>
+      <div class="layer layer-shell-top" data-depth="1.0"></div>
+      <div class="layer layer-driver" data-depth="0.5"></div>
+      <div class="layer layer-battery" data-depth="-0.4"></div>
+    </div>
+    <div class="exploded-copy reveal">
+      <span class="eyebrow">Ingénierie</span>
+      <h2>Chaque couche compte.</h2>
+      <p>Une grille en titane brossé protège un driver 11&nbsp;mm en graphène, posé sur une batterie longue durée. Faites défiler pour voir la structure se déployer, couche par couche.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section stats">
+  <div class="stats-grid reveal">
+    <div class="stat"><div class="num">30h</div><div class="label">Autonomie totale avec boîtier</div></div>
+    <div class="stat"><div class="num">-35dB</div><div class="label">Réduction de bruit active</div></div>
+    <div class="stat"><div class="num">IP54</div><div class="label">Résistant sueur &amp; pluie</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">Tailles d'embouts incluses</div></div>
+  </div>
+</section>
+
+<section class="section colors" id="colors">
+  <div class="colors-wrap reveal">
+    <span class="eyebrow">Coloris</span>
+    <h2>Choisissez votre teinte.</h2>
+    <div class="color-preview">
+      <div class="scene" style="height:auto;">
+        <div class="bud" style="position:relative; opacity:1; top:0;">
+          <div class="bud-head"></div>
+          <div class="bud-stem"></div>
+        </div>
+      </div>
+    </div>
+    <div class="swatches">
+      <button class="swatch active" style="background:linear-gradient(145deg,#f2f2f4,#c7cad0)" data-c1="#f2f2f4" data-c2="#c7cad0" aria-label="Blanc argent"></button>
+      <button class="swatch" style="background:linear-gradient(145deg,#3a3a40,#141416)" data-c1="#4a4a50" data-c2="#141416" aria-label="Noir sidéral"></button>
+      <button class="swatch" style="background:linear-gradient(145deg,#e7c9a3,#b9915d)" data-c1="#e7c9a3" data-c2="#b9915d" aria-label="Beige doré"></button>
+      <button class="swatch" style="background:linear-gradient(145deg,#8fa4ff,#4a5cd9)" data-c1="#8fa4ff" data-c2="#4a5cd9" aria-label="Bleu indigo"></button>
+    </div>
+  </div>
+</section>
+
+<section class="shop" id="shop">
+  <div class="shop-head reveal">
+    <div>
+      <span class="eyebrow">Boutique</span>
+      <h2>Toute la gamme ARC.</h2>
+    </div>
+    <p>Livraison en Suisse sous 2 à 4 jours ouvrés. Retours gratuits sous 30 jours.</p>
+  </div>
+  <div class="product-grid reveal" id="productGrid"></div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="logo"><span class="logo-mark"></span>ARC</div>
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>PRODUIT</h4>
+        <a href="#exploded">Design</a>
+        <a href="#colors">Coloris</a>
+        <a href="#shop">Boutique</a>
+      </div>
+      <div class="footer-col">
+        <h4>SUPPORT</h4>
+        <a href="#">Livraison</a>
+        <a href="#">Retours</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>ENTREPRISE</h4>
+        <a href="#">À propos</a>
+        <a href="#">Confidentialité</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 ARC. Tous droits réservés.</span>
+    <span>Site de démonstration — CHF, Suisse</span>
+  </div>
+</footer>
+
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h3>Votre panier</h3>
+    <button class="cart-close" id="cartClose" aria-label="Fermer le panier">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-footer">
+    <div class="cart-total"><span>Sous-total</span><span id="cartTotal" class="mono">CHF 0.–</span></div>
+    <button class="checkout-btn" id="checkoutBtn">Passer la commande</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Ajouté au panier</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const PRODUCTS = [
+  { id:'buds', name:'ARC Buds', desc:'Écouteurs sans fil, réduction de bruit active.', price:199, visual:'buds' },
+  { id:'case', name:'Boîtier de charge', desc:'Charge rapide, autonomie boîtier 24h.', price:49, visual:'case' },
+  { id:'stand', name:'Support MagCharge', desc:'Recharge par induction, finition aluminium.', price:59, visual:'stand' },
+  { id:'leather', name:'Housse cuir', desc:'Cuir pleine fleur, teinte cognac.', price:39, visual:'leather' },
+];
+
+const cart = {}; // id -> qty
+
+/* ---------------- RENDER PRODUCTS ---------------- */
+const visualHTML = {
+  buds: '<div class="mini-earbud"></div>',
+  case: '<div class="mini-case"></div>',
+  stand: '<div class="mini-stand"></div>',
+  leather: '<div class="mini-case-leather"></div>',
+};
+
+const grid = document.getElementById('productGrid');
+PRODUCTS.forEach(p=>{
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.innerHTML = `
+    <div class="product-visual">${visualHTML[p.visual]}</div>
+    <div class="product-name">${p.name}</div>
+    <div class="product-desc">${p.desc}</div>
+    <div class="product-foot">
+      <span class="price mono">CHF ${p.price}.–</span>
+      <button class="add-btn" data-id="${p.id}">Ajouter</button>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+/* ---------------- NAV BLUR ---------------- */
+const nav = document.getElementById('nav');
+function onScrollNav(){
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+}
+window.addEventListener('scroll', onScrollNav, {passive:true});
+
+/* ---------------- HERO 3D SCROLL ---------------- */
+const heroCase = document.getElementById('heroCase');
+const caseLid = document.getElementById('caseLid');
+const budLeft = document.getElementById('budLeft');
+const budRight = document.getElementById('budRight');
+const heroEl = document.querySelector('header.hero');
+
+function updateHero(){
+  const rect = heroEl.getBoundingClientRect();
+  const total = rect.height;
+  const progress = Math.min(Math.max(-rect.top / total, 0), 1);
+
+  const rotY = -18 + progress * 340;
+  const rotX = 8 - progress * 10;
+  const scale = 1 + progress * 0.15;
+  heroCase.style.transform = `translateY(${progress*-40}px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
+
+  const lidOpen = Math.min(progress / 0.5, 1);
+  caseLid.style.transform = `rotateX(${-lidOpen*130}deg)`;
+
+  const budProgress = Math.min(Math.max((progress-0.25)/0.5,0),1);
+  budLeft.style.opacity = budProgress;
+  budRight.style.opacity = budProgress;
+  budLeft.style.transform = `translate3d(${-budProgress*70}px, ${-budProgress*40}px, ${budProgress*60}px) rotate(${-budProgress*30}deg)`;
+  budRight.style.transform = `translate3d(${budProgress*70}px, ${-budProgress*40}px, ${budProgress*60}px) rotate(${budProgress*30}deg)`;
+}
+
+/* ---------------- EXPLODED SCROLL ---------------- */
+const explodedSection = document.getElementById('exploded');
+const layers = document.querySelectorAll('.layer');
+
+function updateExploded(){
+  const rect = explodedSection.getBoundingClientRect();
+  const vh = window.innerHeight;
+  const progress = Math.min(Math.max((vh - rect.top) / (rect.height + vh), 0), 1);
+  const explode = Math.sin(Math.min(progress*1.6,1) * Math.PI/2);
+  layers.forEach(layer=>{
+    const depth = parseFloat(layer.dataset.depth);
+    const offset = explode * depth * 90;
+    layer.style.transform = `translate3d(0, ${offset}px, ${depth*80}px) rotate(${offset*0.15}deg)`;
+  });
+}
+
+/* ---------------- MASTER SCROLL LOOP ---------------- */
+let ticking = false;
+function onScroll(){
+  if(!ticking){
+    requestAnimationFrame(()=>{
+      updateHero();
+      updateExploded();
+      ticking = false;
+    });
+    ticking = true;
+  }
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+updateHero(); updateExploded();
+
+/* ---------------- REVEAL ON VIEW ---------------- */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in-view'); });
+}, {threshold:0.15});
+revealEls.forEach(el=>io.observe(el));
+
+/* ---------------- COLOR SWATCHES ---------------- */
+const swatches = document.querySelectorAll('.swatch');
+swatches.forEach(sw=>{
+  sw.addEventListener('click', ()=>{
+    swatches.forEach(s=>s.classList.remove('active'));
+    sw.classList.add('active');
+    document.documentElement.style.setProperty('--product-color-1', sw.dataset.c1);
+    document.documentElement.style.setProperty('--product-color-2', sw.dataset.c2);
+  });
+});
+
+/* ---------------- CART LOGIC ---------------- */
+const cartBtn = document.getElementById('cartBtn');
+const cartDrawer = document.getElementById('cartDrawer');
+const cartOverlay = document.getElementById('cartOverlay');
+const cartClose = document.getElementById('cartClose');
+const cartItemsEl = document.getElementById('cartItems');
+const cartTotalEl = document.getElementById('cartTotal');
+const cartCountEl = document.getElementById('cartCount');
+const toast = document.getElementById('toast');
+const checkoutBtn = document.getElementById('checkoutBtn');
+
+function openCart(){ cartDrawer.classList.add('open'); cartOverlay.classList.add('open'); }
+function closeCart(){ cartDrawer.classList.remove('open'); cartOverlay.classList.remove('open'); }
+cartBtn.addEventListener('click', openCart);
+cartClose.addEventListener('click', closeCart);
+cartOverlay.addEventListener('click', closeCart);
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>toast.classList.remove('show'), 1800);
+}
+
+function addToCart(id){
+  cart[id] = (cart[id]||0) + 1;
+  renderCart();
+  showToast('Ajouté au panier');
+}
+function changeQty(id, delta){
+  cart[id] = (cart[id]||0) + delta;
+  if(cart[id] <= 0) delete cart[id];
+  renderCart();
+}
+
+function renderCart(){
+  const ids = Object.keys(cart);
+  const count = ids.reduce((sum,id)=>sum+cart[id],0);
+  cartCountEl.textContent = count;
+
+  if(ids.length === 0){
+    cartItemsEl.innerHTML = '<div class="cart-empty">Votre panier est vide.</div>';
+    cartTotalEl.textContent = 'CHF 0.–';
+    return;
+  }
+
+  let total = 0;
+  cartItemsEl.innerHTML = ids.map(id=>{
+    const p = PRODUCTS.find(x=>x.id===id);
+    const lineTotal = p.price * cart[id];
+    total += lineTotal;
+    return `
+      <div class="cart-item">
+        <div>
+          <div class="cart-item-name">${p.name}</div>
+          <div class="cart-item-price">CHF ${p.price}.– / unité</div>
+        </div>
+        <div class="qty-ctrl">
+          <button data-id="${id}" data-delta="-1">–</button>
+          <span class="mono">${cart[id]}</span>
+          <button data-id="${id}" data-delta="1">+</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  cartTotalEl.textContent = `CHF ${total}.–`;
+}
+
+grid.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.add-btn');
+  if(!btn) return;
+  addToCart(btn.dataset.id);
+  btn.classList.add('added');
+  btn.textContent = 'Ajouté';
+  setTimeout(()=>{ btn.classList.remove('added'); btn.textContent = 'Ajouter'; }, 1200);
+});
+
+cartItemsEl.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-delta]');
+  if(!btn) return;
+  changeQty(btn.dataset.id, parseInt(btn.dataset.delta,10));
+});
+
+checkoutBtn.addEventListener('click', ()=>{
+  if(Object.keys(cart).length === 0){
+    showToast('Votre panier est vide');
+    return;
+  }
+  showToast('Commande simulée — merci !');
+  Object.keys(cart).forEach(k=>delete cart[k]);
+  renderCart();
+  setTimeout(closeCart, 900);
+});
+
+renderCart();
+</script>
+</body>
+</html>
